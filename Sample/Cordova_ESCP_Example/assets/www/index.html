@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<!--
+    Licensed to the Apache Software Foundation (ASF) under one
+    or more contributor license agreements.  See the NOTICE file
+    distributed with this work for additional information
+    regarding copyright ownership.  The ASF licenses this file
+    to you under the Apache License, Version 2.0 (the
+    "License"); you may not use this file except in compliance
+    with the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing,
+    software distributed under the License is distributed on an
+    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+     KIND, either express or implied.  See the License for the
+    specific language governing permissions and limitations
+    under the License.
+-->
+<html>
+    <head>
+        <!--
+        Customize this policy to fit your own app's needs. For more guidance, see:
+            https://github.com/apache/cordova-plugin-whitelist/blob/master/README.md#content-security-policy
+        Some notes:
+            * gap: is required only on iOS (when using UIWebView) and is needed for JS->native communication
+            * https://ssl.gstatic.com is required only on Android and is needed for TalkBack to function properly
+            * Disables use of inline scripts in order to mitigate risk of XSS vulnerabilities. To change this:
+                * Enable inline JS: add 'unsafe-inline' to default-src
+        -->
+        <meta name="format-detection" content="telephone=no">
+        <meta name="msapplication-tap-highlight" content="no">
+        <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width">
+        <meta charset="utf-8">
+<!--         <link rel="stylesheet" type="text/css" href="css/index.css"> -->
+        <title>CITIZEN Cordova</title>
+    </head>
+    <body>
+        <div class="app">
+            <h2>CITIZEN Cordova ESC/POS</h2>
+            <div id="deviceready" class="blink">
+                <p class="event listening">Connecting to Device</p>
+                <p class="event received">Device is Ready</p>
+            </div>
+
+            <div>
+			Address : <input type="text" id="printerAddress" placeholder="Bluetooth or IP address ..."><br/>
+            </div><br/>
+            <button type="button" id="btnGetPairedList">Paired bluetooth printers</button>
+			<select id="bluetoothList" onchange="dispAddress();">
+				<option>Choose a bluetooth</option>
+			</select>
+			</div><br/>
+            <div>
+            <button type="button" id="btnConnect">Connect</button>
+            <button type="button" id="btnPrint">Print</button>
+            <button type="button" id="btnStatus">Status</button>
+            <button type="button" id="btnDisconnect">Disconnect</button>
+            </div><br/>
+            <div>
+			<select id="TrackList" name="TrackList">
+  				<option value="Track1">Track1</option>
+   				<option value="Track2">Track2</option>
+  				<option value="Track12" selected="selected">Track12</option>
+   				<option value="Track3">Track3</option>
+  				<option value="Track23">Track23</option>
+			</select>
+            <button type="button" id="btnStartSwipe">Swipe MSR</button>
+            <button type="button" id="btnCancelSwipe">Cancel MSR</button>
+            </div><br/>
+            <div>
+			Track1 : <input type="text" id="msrTrack1" placeholder="Track1:"><br/>
+			Track2 : <input type="text" id="msrTrack2" placeholder="Track2:"><br/>
+			Track3 : <input type="text" id="msrTrack3" placeholder="Track3:"><br/>
+            </div><br/><br/><br/>
+            <p>----- Search bluetooth printers -----</p>
+            <div>
+            <button type="button" id="btnSearchBT">Search printers</button>
+            <button type="button" id="btnGetCount">Searched count</button>
+			</div><br/>
+            <div>
+            <button type="button" id="btnGetList">Searched info</button>
+			<select id="SearchedBluetoothList">
+				<option>Searched bluetooth printer</option>
+			</select>
+            </div><br/>
+        </div>
+
+        <script type="text/javascript" src="cordova.js"></script>
+        <script type="text/javascript" src="js/index.js"></script>
+        <script type="text/javascript" src="js/jquery-1.7.2.min.js"></script>
+        <script type="text/javascript" src="js/CitizenEscpPrinter.js"></script>
+        <script type="text/javascript">
+
+		function dispAddress()
+		{
+//     		alert("dispAddress start");
+        	var printerAddress;
+			var list = document.getElementById('bluetoothList');
+            var indx = list.selectedIndex;
+            printerAddress = list[indx].value;
+			document.getElementById("printerAddress").value = printerAddress; 
+		}
+
+		$(window).load( function()
+		{
+//       	alert("initButton start");
+
+			var listBox = document.getElementById("bluetoothList");
+			var button_Print = document.getElementById('btnPrint');
+			var button_Status = document.getElementById('btnStatus');
+			var button_disconnect = document.getElementById('btnDisconnect');
+			var button_startSwipe = document.getElementById('btnStartSwipe');
+			var button_cancelSwipe = document.getElementById('btnCancelSwipe');
+			listBox.disabled = true; 
+			button_Print.disabled = true; 
+			button_Status.disabled = true; 
+			button_disconnect.disabled = true; 
+			button_startSwipe.disabled = true; 
+			button_cancelSwipe.disabled = true; 
+		})
+
+        $("#btnConnect").unbind("click").click(function()
+        {
+        	var printerAddress;
+        	var charSet = "Shift_JIS";
+			printerAddress = document.getElementById('printerAddress').value;
+
+      		alert("Address:" + printerAddress);
+
+			var _printer = cordova.require("cordova/plugin/citizenEscpPrinter");
+        	_printer.connect(function(result)
+        	{
+        		alert("Result:" + result);
+
+				var button_Connect = document.getElementById('btnConnect');
+				var button_Print = document.getElementById('btnPrint');
+				var button_Status = document.getElementById('btnStatus');
+				var button_disconnect = document.getElementById('btnDisconnect');
+				var button_startSwipe = document.getElementById('btnStartSwipe');
+				button_Connect.disabled = true; 
+				button_Print.disabled = false; 
+				button_Status.disabled = false; 
+				button_disconnect.disabled = false; 
+				button_startSwipe.disabled = false; 
+        	},
+        	function(err) {
+        		alert(err);
+        	},
+        	printerAddress,
+        	charSet);
+		});
+        $("#btnStatus").unbind("click").click(function()
+        {
+			var _printer = cordova.require("cordova/plugin/citizenEscpPrinter");
+        	_printer.getStatus(function(result)
+        	{
+        		alert("Result : " + result);
+        	},
+        	function(err) {
+        		alert("ERROR:" + err);
+        	});
+		});
+        $("#btnPrint").unbind("click").click(function()
+        {
+        	var imagePath = "//sdcard//temp//test//logo_s.jpg";
+        	var printTextData = "Print Text\n";
+			var printNormalData = "\x1b|cA" + "\x1b|bC" + "\x1b|2C" + "Receipt\n\n\n" + "\x1b|N" + 
+					"\x1b|rA" + "\x1b|bC" + "TEL (123)-456-7890\n" + "\x1b|N" + 
+					"\x1b|cA" + "\x1b|bC" + "Thank you for coming to our shop!\n\n" +  "\x1b|N" + 
+					"\x1b|cA" + "Chicken                   $10.00\n" + "\x1b|N" + 
+					"\x1b|cA" + "Hamburger                 $20.00\n" + "\x1b|N" + 
+					"\x1b|cA" + "Pizza                     $30.00\n" + "\x1b|N" + 
+					"\x1b|cA" + "Lemons                    $40.00\n" + "\x1b|N" + 
+					"\x1b|cA" + "Drink                     $50.00\n" + "\x1b|N" + 
+					"\x1b|cA" + "Excluded tax             $150.00\n" + "\x1b|N" + 
+					"\x1b|cA" + "\x1b|uC" + "Tax(5%)                    $7.50\n" + "\x1b|N" + 
+					"\x1b|cA" + "\x1b|bC" + "\x1b|2C" + "Total    $157.50\n" + "\x1b|N" + 
+					"\x1b|cA" + "\x1b|bC" + "Payment                  $200.00\n" + "\x1b|N" + 
+					"\x1b|cA" + "\x1b|bC" + "Change                    $42.50\n\n";
+
+        	// Barcode symbology
+        	var CMP_BCS_UPCA 	=	101;
+			var CMP_BCS_UPCE 	=	102;
+			var CMP_BCS_EAN8 	=	103;
+			var CMP_BCS_EAN13   =	104;
+			var CMP_BCS_JAN8 	=	105;
+			var CMP_BCS_JAN13   =	106;
+			var CMP_BCS_ITF 	=	107;
+			var CMP_BCS_Codabar =	108;
+			var CMP_BCS_Code39  =	109;
+			var CMP_BCS_Code93  =	110;
+			var CMP_BCS_Code128 =	111;
+        	// Barcode text position
+			var CMP_HRI_TEXT_NONE  =	0;
+			var CMP_HRI_TEXT_ABOVE =	1;
+			var CMP_HRI_TEXT_BELOW =	2;
+        	// Alignment Code
+			var CMP_ALIGNMENT_LEFT   =	0;
+			var CMP_ALIGNMENT_CENTER = 	1;
+			var CMP_ALIGNMENT_RIGHT  =	2;
+        	// QRCode Error Correction Level.
+			var CMP_QRCODE_EC_LEVEL_L	= 	0;
+			var CMP_QRCODE_EC_LEVEL_M	= 	1;
+			var CMP_QRCODE_EC_LEVEL_Q	= 	2;
+			var CMP_QRCODE_EC_LEVEL_H	= 	3;
+			// Image Size
+			var CMP_BITMAP_NORMAL				= 0;
+			var CMP_BITMAP_WIDTH_DOUBLE			= 1;
+			var CMP_BITMAP_HEIGHT_DOUBLE		= 2;
+			var CMP_BITMAP_WIDTH_HEIGHT_DOUBLE	= 3;
+        	//Text Attribute for printText
+			//Font Attribute default value : not Bold, FontA, not Underline, not reverse
+			var CMP_FNT_DEFAULT		=	0;
+			var CMP_FNT_FONTB		=	1;
+			var CMP_FNT_BOLD		=	8;
+			var CMP_FNT_REVERSE		=	16; // Added in 1.065
+			var CMP_FNT_UNDERLINE	=	128;
+			var CMP_FNT_UNDERLINE2	=	256;
+			// Text Size for printText
+			var CMP_TXT_1WIDTH =		0;
+			var CMP_TXT_2WIDTH =		16;
+			var CMP_TXT_3WIDTH =		32;
+			var CMP_TXT_4WIDTH =		48;
+			var CMP_TXT_5WIDTH =		64;
+			var CMP_TXT_6WIDTH =		80;
+			var CMP_TXT_7WIDTH =		96;
+			var CMP_TXT_8WIDTH =	 	112;
+
+			var CMP_TXT_1HEIGHT =		0;
+			var CMP_TXT_2HEIGHT =		1;
+			var CMP_TXT_3HEIGHT =		2;
+			var CMP_TXT_4HEIGHT =		3;
+			var CMP_TXT_5HEIGHT =		4;
+			var CMP_TXT_6HEIGHT =		5;
+			var CMP_TXT_7HEIGHT =		6;
+			var CMP_TXT_8HEIGHT =	 	7;
+		        
+        	var barData = "123456";
+        	
+        	// Print image.
+			var _printer = cordova.require("cordova/plugin/citizenEscpPrinter");
+        	_printer.printImage(function(result)
+        	{
+        		alert(result);
+        	},
+        	function(err) {
+        		alert(err);
+        	},
+        	imagePath, CMP_ALIGNMENT_CENTER, CMP_BITMAP_NORMAL);
+
+			// Line feed.
+        	_printer.lineFeed(function(result)
+        	{
+        		alert(result);
+        	},
+        	function(err) {
+        		alert(err);
+        	},
+        	2);
+
+			// Print using printText function.
+        	_printer.printText(function(result)
+        	{
+        		alert(result);
+        	},
+        	function(err) {
+        		alert(err);
+        	},
+        	printTextData, CMP_ALIGNMENT_CENTER, CMP_FNT_DEFAULT, CMP_TXT_1WIDTH | CMP_TXT_1HEIGHT);
+        	_printer.printText(function(result)
+        	{
+        		alert(result);
+        	},
+        	function(err) {
+        		alert(err);
+        	},
+        	printTextData, CMP_ALIGNMENT_CENTER, CMP_FNT_DEFAULT, CMP_TXT_2WIDTH | CMP_TXT_1HEIGHT);
+        	_printer.printText(function(result)
+        	{
+        		alert(result);
+        	},
+        	function(err) {
+        		alert(err);
+        	},
+        	printTextData, CMP_ALIGNMENT_CENTER, CMP_FNT_DEFAULT, CMP_TXT_1WIDTH | CMP_TXT_2HEIGHT);
+        	_printer.printText(function(result)
+        	{
+        		alert(result);
+        	},
+        	function(err) {
+        		alert(err);
+        	},
+        	printTextData, CMP_ALIGNMENT_CENTER, CMP_FNT_DEFAULT, CMP_TXT_2WIDTH | CMP_TXT_2HEIGHT);
+
+			// Print using printNormal function.
+        	_printer.printNormal(function(result)
+        	{
+        		alert(result);
+        	},
+        	function(err) {
+        		alert(err);
+        	},
+        	printNormalData);
+
+			// Print 1D-Barcode.
+        	_printer.printBarCode(function(result)
+        	{
+        		alert(result);
+        	},
+        	function(err) {
+        		alert(err);
+        	},
+        	barData, CMP_BCS_Code39, 40, 2, CMP_ALIGNMENT_CENTER, CMP_HRI_TEXT_BELOW);
+
+			// Print QR Code.
+        	_printer.printQRCode(function(result)
+        	{
+        		alert(result);
+        	},
+        	function(err) {
+        		alert(err);
+        	},
+        	barData, 0, 5, CMP_QRCODE_EC_LEVEL_M, CMP_ALIGNMENT_CENTER);
+
+			// Line feed.
+        	_printer.lineFeed(function(result)
+        	{
+        		alert(result);
+        	},
+        	function(err) {
+        		alert(err);
+        	},
+        	3);
+		});
+        $("#btnDisconnect").unbind("click").click(function()
+        {
+			var _printer = cordova.require("cordova/plugin/citizenEscpPrinter");
+        	_printer.disconnect(function(result)
+        	{
+        		alert("Result : " + result);
+
+				var button_Connect = document.getElementById('btnConnect');
+				var button_Print = document.getElementById('btnPrint');
+				var button_Status = document.getElementById('btnStatus');
+				var button_disconnect = document.getElementById('btnDisconnect');
+				var button_startSwipe = document.getElementById('btnStartSwipe');
+				var button_cancelSwipe = document.getElementById('btnCancelSwipe');
+				button_Connect.disabled = false; 
+				button_Print.disabled = true; 
+				button_Status.disabled = true; 
+				button_disconnect.disabled = true; 
+				button_startSwipe.disabled = true; 
+				button_cancelSwipe.disabled = true; 
+        	},
+        	function(err) {
+        		alert(err);
+        	});
+		});
+        $("#btnStartSwipe").unbind("click").click(function()
+        {
+			var CMP_MSR_TRACK_1 	= 49;
+			var CMP_MSR_TRACK_2 	= 50;
+			var CMP_MSR_TRACK_12	= 51;
+			var CMP_MSR_TRACK_3 	= 52;
+			var CMP_MSR_TRACK_23	= 54;
+
+
+			document.getElementById("msrTrack1").value = "";
+			document.getElementById("msrTrack2").value = "";
+			document.getElementById("msrTrack3").value = "";
+
+			var button_startSwipe = document.getElementById('btnStartSwipe');
+			var button_cancelSwipe = document.getElementById('btnCancelSwipe');
+			button_startSwipe.disabled = true; 
+			button_cancelSwipe.disabled = false; 
+
+			var trackList = document.getElementById('TrackList');
+            var selTrack = trackList.selectedIndex;
+//            alert(selTrack);
+			switch(selTrack)
+			{
+			case 0:
+				selTrack = CMP_MSR_TRACK_1;
+				break;
+			case 1:
+				selTrack = CMP_MSR_TRACK_2;
+				break;
+			case 2:
+				selTrack = CMP_MSR_TRACK_12;
+				break;
+			case 3:
+				selTrack = CMP_MSR_TRACK_3;
+				break;
+			case 4:
+				selTrack = CMP_MSR_TRACK_23;
+				break;
+			}
+			var _printer = cordova.require("cordova/plugin/citizenEscpPrinter");
+        	_printer.swipeMSR(function(result)
+        	{
+//        		alert(result);
+				var msrData= JSON.stringify(result);
+				var msrDataInfo= JSON.parse(msrData);
+
+				if(msrDataInfo.Track1 != undefined) document.getElementById("msrTrack1").value = msrDataInfo.Track1; 
+				if(msrDataInfo.Track2 != undefined) document.getElementById("msrTrack2").value = msrDataInfo.Track2; 
+				if(msrDataInfo.Track3 != undefined) document.getElementById("msrTrack3").value = msrDataInfo.Track3; 
+
+				button_startSwipe = document.getElementById('btnStartSwipe');
+				button_cancelSwipe = document.getElementById('btnCancelSwipe');
+				button_startSwipe.disabled = false; 
+				button_cancelSwipe.disabled = true; 
+        	},
+        	function(err) {
+        		alert(err);
+        	},
+        	selTrack);
+		});
+        $("#btnCancelSwipe").unbind("click").click(function()
+        {
+			var _printer = cordova.require("cordova/plugin/citizenEscpPrinter");
+        	_printer.cancelMSR(function(result)
+        	{
+        		alert(result);
+				var button_startSwipe = document.getElementById('btnStartSwipe');
+				var button_cancelSwipe = document.getElementById('btnCancelSwipe');
+				button_startSwipe.disabled = false; 
+				button_cancelSwipe.disabled = true; 
+        	},
+        	function(err) {
+        		alert(err);
+        	});
+		});
+
+        $("#btnGetPairedList").unbind("click").click(function()
+        {
+			var listBox = document.getElementById("bluetoothList");
+	        listBox.options.length = 0;
+			listBox.disabled = false; 
+
+			var _printer = cordova.require("cordova/plugin/citizenEscpPrinter");
+        	_printer.getPairedBT(function(result)
+        	{
+        		var iCount = 6;
+				var bluetooth= JSON.stringify(result);
+				var bluetoothInfo= JSON.parse(bluetooth);
+				for(i=1; i<=iCount; i++)
+				{
+					switch(i)
+					{
+					case 1:
+						if(bluetoothInfo.Address1 != undefined)
+						{
+							var select = document.getElementById("bluetoothList");
+							var option = document.createElement('option');
+							option.text = bluetoothInfo.Address1;
+							option.value = bluetoothInfo.Address1;
+							select.add(option, 0);
+							document.getElementById("printerAddress").value = bluetoothInfo.Address1; 
+						}
+
+//    	    			alert(bluetoothInfo.Address1);
+						break;
+					case 2:
+						if(bluetoothInfo.Address2 != undefined)
+						{
+							var select = document.getElementById("bluetoothList");
+							var option = document.createElement('option');
+							option.text = bluetoothInfo.Address2;
+							option.value = bluetoothInfo.Address2;
+							select.add(option, 0);
+						}
+
+//    	    			alert(bluetoothInfo.Address2);
+						break;
+					case 3:
+						if(bluetoothInfo.Address3 != undefined)
+						{
+							var select = document.getElementById("bluetoothList");
+							var option = document.createElement('option');
+							option.text = bluetoothInfo.Address3;
+							option.value = bluetoothInfo.Address3;
+							select.add(option, 0);
+						}
+
+//    	    			alert(bluetoothInfo.Address3);
+						break;
+					case 4:
+						if(bluetoothInfo.Address4 != undefined)
+						{
+							var select = document.getElementById("bluetoothList");
+							var option = document.createElement('option');
+							option.text = bluetoothInfo.Address4;
+							option.value = bluetoothInfo.Address4;
+							select.add(option, 0);
+						}
+
+//    	    			alert(bluetoothInfo.Address4);
+						break;
+					case 5:
+						if(bluetoothInfo.Address5 != undefined)
+						{
+							var select = document.getElementById("bluetoothList");
+							var option = document.createElement('option');
+							option.text = bluetoothInfo.Address5;
+							option.value = bluetoothInfo.Address5;
+							select.add(option, 0);
+						}
+						
+//    	    			alert(bluetoothInfo.Address5);
+						break;
+					case 6:
+						if(bluetoothInfo.Address6 != undefined)
+						{
+							var select = document.getElementById("bluetoothList");
+							var option = document.createElement('option');
+							option.text = bluetoothInfo.Address6;
+							option.value = bluetoothInfo.Address6;
+							select.add(option, 0);
+						}
+
+//    	    			alert(bluetoothInfo.Address6);
+						break;
+					}
+				}
+        	},
+        	function(err) {
+        		alert(err);
+        	});
+		});
+
+        $("#btnSearchBT").unbind("click").click(function()
+        {
+        	var searchedListBox = document.getElementById("SearchedBluetoothList");
+	        searchedListBox.options.length = 0;
+
+			var _printer = cordova.require("cordova/plugin/citizenEscpPrinter");
+        	_printer.searchBT(function(result)
+        	{
+        		alert("Result:" + result);
+        	},
+        	function(err) {
+        		alert(err);
+        	});
+		});
+
+        $("#btnGetCount").unbind("click").click(function()
+        {
+			var _printer = cordova.require("cordova/plugin/citizenEscpPrinter");
+        	_printer.getCountBT(function(result)
+        	{
+        		alert("Result:" + result);
+        	},
+        	function(err) {
+        		alert(err);
+        	});
+		});
+
+        $("#btnGetList").unbind("click").click(function()
+        {
+        	var searchedListBox = document.getElementById("SearchedBluetoothList");
+	        searchedListBox.options.length = 0;
+        
+			var _printer = cordova.require("cordova/plugin/citizenEscpPrinter");
+        	_printer.getCountBT(function(result)
+        	{
+        		alert("Result:" + result);
+        		var iCount = Number(result);
+        		var i = 0;
+        		var curCnt = 1;
+	        	_printer.getListBTAddress(function(result)
+	        	{
+					var bluetooth= JSON.stringify(result);
+					var bluetoothInfo= JSON.parse(bluetooth);
+					for(i=1; i<=iCount; i++)
+					{
+						switch(i)
+						{
+						case 1:
+							if(bluetoothInfo.Address1 != undefined)
+							{
+								var select = document.getElementById("SearchedBluetoothList");
+								var option = document.createElement('option');
+								option.text = bluetoothInfo.Address1;
+								option.value = bluetoothInfo.Address1;
+								select.add(option, 0);
+
+								document.getElementById("printerAddress").value = bluetoothInfo.Address1; 
+	    	    				// alert(bluetoothInfo.Address1);
+	    	    			}
+							break;
+						case 2:
+							if(bluetoothInfo.Address2 != undefined)
+							{
+								var select = document.getElementById("SearchedBluetoothList");
+								var option = document.createElement('option');
+								option.text = bluetoothInfo.Address2;
+								option.value = bluetoothInfo.Address2;
+								select.add(option, 0);
+
+	    	    				// alert(bluetoothInfo.Address2);
+							}
+							break;
+						case 3:
+							if(bluetoothInfo.Address3 != undefined)
+							{
+								var select = document.getElementById("SearchedBluetoothList");
+								var option = document.createElement('option');
+								option.text = bluetoothInfo.Address3;
+								option.value = bluetoothInfo.Address3;
+								select.add(option, 0);
+
+	    	    				// alert(bluetoothInfo.Address3);
+    	    				}
+							break;
+						case 4:
+							if(bluetoothInfo.Address4 != undefined)
+							{
+								var select = document.getElementById("SearchedBluetoothList");
+								var option = document.createElement('option');
+								option.text = bluetoothInfo.Address4;
+								option.value = bluetoothInfo.Address4;
+								select.add(option, 0);
+
+	    	    				// alert(bluetoothInfo.Address4);
+    	    				}
+							break;
+						case 5:
+							if(bluetoothInfo.Address5 != undefined)
+							{
+								var select = document.getElementById("SearchedBluetoothList");
+								var option = document.createElement('option');
+								option.text = bluetoothInfo.Address5;
+								option.value = bluetoothInfo.Address5;
+								select.add(option, 0);
+
+	    	    				// alert(bluetoothInfo.Address5);
+    	    				}
+							break;
+						}
+					}
+        		},
+	        	function(err) {
+    	    		alert(err);
+        		});
+        	},
+        	function(err) {
+        		alert(err);
+        	});
+		});
+
+		</script>
+    </body>
+</html>
